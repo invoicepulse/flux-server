@@ -17,6 +17,7 @@ def load_model():
             torch_dtype=torch.bfloat16
         )
         pipe.to("cuda")
+        pipe.enable_model_cpu_offload()  # Memory optimization
         print("✅ FLUX 2 loaded!")
     return pipe
 
@@ -30,38 +31,47 @@ def generate_batch():
         data = request.json
         scenes = data.get("scenes", [])
         
-        print(f"📦 Generating {len(scenes)} images...")
+        print(f"📦 Generating {len(scenes)} images in parallel batches...")
         
-        model = load_model()  # Loads on first request, not startup
+        model = load_model()
         results = []
         
-        for scene in scenes:
-            prompt = scene.get("prompt")
-            scene_id = scene.get("scene_id", 0)
-            width = scene.get("width", 720)
-            height = scene.get("height", 1280)
+        # H100 can do ~6-8 images in parallel (32GB VRAM)
+        BATCH_SIZE = 6
+        
+        for i in range(0, len(scenes), BATCH_SIZE):
+            batch = scenes[i:i+BATCH_SIZE]
+            prompts = [s.get("prompt") for s in batch]
+            scene_ids = [s.get("scene_id", idx) for idx, s in enumerate(batch)]
             
-            print(f"🎨 Scene {scene_id}: {prompt[:50]}...")
+            # Get dimensions from first scene (all same)
+            width = batch[0].get("width", 1080)
+            height = batch[0].get("height", 1920)
             
-            image = model(
-                prompt=prompt,
+            print(f"🎨 Batch {i//BATCH_SIZE + 1}: {len(prompts)} images @ {width}x{height}...")
+            
+            # PARALLEL generation - all images at once
+            images = model(
+                prompt=prompts,  # List of prompts
                 width=width,
                 height=height,
                 num_inference_steps=28,
                 guidance_scale=3.5,
-            ).images[0]
+            ).images
             
-            buffer = io.BytesIO()
-            image.save(buffer, format="JPEG", quality=90)
-            image_b64 = base64.b64encode(buffer.getvalue()).decode()
+            # Convert all to base64
+            for idx, image in enumerate(images):
+                buffer = io.BytesIO()
+                image.save(buffer, format="JPEG", quality=95)  # Higher quality
+                image_b64 = base64.b64encode(buffer.getvalue()).decode()
+                
+                results.append({
+                    "scene_id": scene_ids[idx],
+                    "image_b64": image_b64,
+                    "status": "success"
+                })
             
-            results.append({
-                "scene_id": scene_id,
-                "image_b64": image_b64,
-                "status": "success"
-            })
-            
-            print(f"✅ Scene {scene_id} done!")
+            print(f"✅ Batch {i//BATCH_SIZE + 1} done!")
         
         return jsonify({
             "results": results,
@@ -73,5 +83,4 @@ def generate_batch():
         return jsonify({"error": str(e), "status": "failed"}), 500
 
 if __name__ == "__main__":
-    # Don't preload - Flask starts immediately
     app.run(host="0.0.0.0", port=8000)
