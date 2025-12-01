@@ -11,13 +11,13 @@ pipe = None
 def load_model():
     global pipe
     if pipe is None:
-        print("🔄 Loading Flux 2 Dev...")
+        print("🔄 Loading FLUX 2 Dev...")
         pipe = FluxPipeline.from_pretrained(
-            "black-forest-labs/FLUX.1-dev",
+            "black-forest-labs/FLUX.2-dev",
             torch_dtype=torch.bfloat16
         )
         pipe.to("cuda")
-        print("✅ Flux loaded!")
+        print("✅ FLUX 2 loaded!")
     return pipe
 
 @app.route("/health", methods=["GET"])
@@ -32,7 +32,7 @@ def generate_batch():
         
         print(f"📦 Generating {len(scenes)} images...")
         
-        model = load_model()
+        model = load_model()  # Loads on first request, not startup
         results = []
         
         for scene in scenes:
@@ -73,7 +73,5 @@ def generate_batch():
         return jsonify({"error": str(e), "status": "failed"}), 500
 
 if __name__ == "__main__":
-    # Preload model on startup
-    load_model()
+    # Don't preload - Flask starts immediately
     app.run(host="0.0.0.0", port=8000)
-
