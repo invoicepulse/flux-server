@@ -4,7 +4,7 @@ import base64
 import traceback
 import torch
 from flask import Flask, request, jsonify
-from diffusers import FluxPipeline
+from diffusers import Flux2Pipeline
 
 app = Flask(__name__)
 pipe = None
@@ -17,13 +17,13 @@ def load_model():
             print(f"🔐 HF Token: {'Found' if hf_token else 'Missing'}")
             
             print("🔄 Loading FLUX 2 Dev...")
-            pipe = FluxPipeline.from_pretrained(
+            pipe = Flux2Pipeline.from_pretrained(
                 "black-forest-labs/FLUX.2-dev",
                 torch_dtype=torch.bfloat16,
                 token=hf_token
             )
             pipe.to("cuda")
-            print("✅ FLUX 2 loaded!")
+            print("✅ FLUX 2 Dev loaded!")
         except Exception as e:
             print(f"❌ Model loading failed: {e}")
             print(traceback.format_exc())
