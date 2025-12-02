@@ -16,7 +16,7 @@ RUN pip install --no-cache-dir \
     torch==2.5.1 \
     torchvision \
     git+https://github.com/huggingface/diffusers.git \
-    transformers==4.47.1 \
+    git+https://github.com/huggingface/transformers.git \
     accelerate \
     safetensors \
     pillow \
