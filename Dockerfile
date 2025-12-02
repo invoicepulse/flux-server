@@ -15,7 +15,7 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir \
     torch==2.5.1 \
     torchvision \
-    diffusers==0.32.1 \
+    git+https://github.com/huggingface/diffusers.git \
     transformers==4.47.1 \
     accelerate \
     safetensors \
