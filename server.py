@@ -45,15 +45,15 @@ def generate_batch():
         model = load_model()
         results = []
         
-        BATCH_SIZE = 6
+        BATCH_SIZE = 2
         
         for i in range(0, len(scenes), BATCH_SIZE):
             batch = scenes[i:i+BATCH_SIZE]
             prompts = [s.get("prompt") for s in batch]
             scene_ids = [s.get("scene_id", idx) for idx, s in enumerate(batch)]
             
-            width = batch[0].get("width", 1080)
-            height = batch[0].get("height", 1920)
+            width = batch[0].get("width", 720)
+            height = batch[0].get("height", 1280)
             
             print(f"🎨 Batch {i//BATCH_SIZE + 1}: {len(prompts)} images @ {width}x{height}")
             
