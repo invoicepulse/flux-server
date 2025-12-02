@@ -22,7 +22,7 @@ def load_model():
                 torch_dtype=torch.bfloat16,
                 token=hf_token
             )
-            pipe.to("cuda")
+            pipe.enable_model_cpu_offload()
             print("✅ FLUX 2 Dev loaded!")
         except Exception as e:
             print(f"❌ Model loading failed: {e}")
