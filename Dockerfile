@@ -21,7 +21,8 @@ RUN pip install --no-cache-dir \
     safetensors \
     pillow \
     flask \
-    sentencepiece
+    sentencepiece \
+    huggingface_hub
 
 COPY server.py .
 
